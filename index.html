@@ -11,20 +11,17 @@
     <div id='topBar'>
         <div id='searchCar'>
             <div class='setting'>
-                    <label class="label">Make:</label>
-                    <input list="makes" name="makes" id='makesInput'/>
+                    <input list="makes" name="makes" placeholder='Ford...' id='makesInput'/>
                     <datalist id="makes">
                     </datalist>
             </div>
             <div class='setting'>
-                <label class="label">Model:</label>
-                <input list="models" name="models" id='modelsInput' />
+                <input list="models" name="models" placeholder='Five Hundred...' id='modelsInput' />
                 <datalist id="models">
                 </datalist>
             </div>
             <div class='setting'>
-                <label class="label">Year:</label>
-                <input list="years" name="years" id='yearsInput'/>
+                <input list="years" name="years" placeholder='2006...'id='yearsInput'/>
                 <datalist id="years">
                 </datalist>
             </div>
@@ -43,19 +40,25 @@
             <div id='topBarRightBox'>EXTRA</div>
             <div id='rightBoxes'></div>
         </div>
-        
     </div>
 
     <div id='body'>
         <div id='noCar'>No Card Selected</div>
         <div id='pullUpStats'>
-            
-            <div class='statText' id='statKeys'>Total Keys: </div>
-            <div class='statText' id='statPrice'>Total Value: </div>
-            <div class='statText' id='statRetail'>Total Retail: </div>
-            <div class='statText' id='statBlankCellsRemaining'>Blank Cells Remaining: </div>
-            <div class='statText' id='statPercentBlank'>Percentage of Blank Cells: </div>
-            <div class='statText' id='statPercentDead'>Percentage of Dead Cells: </div>
+            <div id="topBarMenus">Stat Menu</div>
+            <div id="bodyMenus">
+                <div class='statText' id='statKeys'>Total Keys: </div>
+                <div class='statText' id='statPrice'>Total Value: </div>
+                <div class='statText' id='statRetail'>Total Retail: </div>
+                <div class='statText' id='statBlankCellsRemaining'>Blank Cells Remaining: </div>
+                <div class='statText' id='statPercentBlank'>Percentage of Blank Cells: </div>
+                <div class='statText' id='statPercentDead'>Percentage of Dead Cells: </div>
+            </div>
+        </div>
+        <div id='pullUpOptions'>
+            <div id="topBarMenus">Options</div>
+            <div id="bodyMenus">
+            </div>
         </div>
         <div id='pullUp'>
             <div id='leftSide'>
@@ -98,7 +101,7 @@
             </div>
             <div id='rightSide'>
                 <div id='topBar2'>
-                    <div id='worksOn'>Works On These Cars:</div>
+                    <div id='worksOn'>Working Models</div>
                     <div id='worksNotes'></div>
                 </div>
                 <div id='worksOnList'></div>
@@ -106,32 +109,42 @@
         </div>
 
     </div>
-    <div id='bottomMap'>
-        <div id='searchFor'>
-            <div id='sfOption'>
-                <div id='sfText'>Search By: </div>
-                <select id='sfSelect' onchange="tableMapSearchChange(0)"></select><br>
-                <input id='sfInput' onchange="tableMapSearchChange(0)">
-            </div>
-            <div id='sfOption'>
-                <div id='sfText'>Search By: </div>
-                <select id='sfSelect' onchange="tableMapSearchChange(1)"></select><br>
-                <input id='sfInput' onchange="tableMapSearchChange(1)">
-            </div>
-            <div id='sfOption'>
-                <div id='sfText'>Search By: </div>
-                <select id='sfSelect' onchange="tableMapSearchChange(2)"></select><br>
-                <input id='sfInput' onchange="tableMapSearchChange(2)">
-            </div>
-        </div>
-        <table cellspacing='0' id='tableMap'></table>
-    </div>
+    <div id="saveKeys"></div>
 	
-    <div id="remoteViewerButton">Remote Viewer</div>
     <div id="remoteViewer">
     </div>
     <div id="remoteBottom"></div>
-    <div id="statButton">STAT Viewer</div>
+
+    <div id="bottomBarFull">
+        <div class='bottomOption' id="remoteViewerButton">Remote Viewer</div>
+        <div class='bottomOption' id="statButton">Stat Card</div>
+        <div class='bottomOption' id="bottomBar">Add Key</div>
+        <div class='bottomOption' id="mapButton">
+            Pull Up Map
+            <div id='bottomMap'>
+                <div id='searchFor'>
+                    <div id='sfOption'>
+                        <div id='sfText'>Search By: </div>
+                        <select id='sfSelect' onchange="tableMapSearchChange(0)"></select><br>
+                        <input id='sfInput' onchange="tableMapSearchChange(0)">
+                    </div>
+                    <div id='sfOption'>
+                        <div id='sfText'>Search By: </div>
+                        <select id='sfSelect' onchange="tableMapSearchChange(1)"></select><br>
+                        <input id='sfInput' onchange="tableMapSearchChange(1)">
+                    </div>
+                    <div id='sfOption'>
+                        <div id='sfText'>Search By: </div>
+                        <select id='sfSelect' onchange="tableMapSearchChange(2)"></select><br>
+                        <input id='sfInput' onchange="tableMapSearchChange(2)">
+                    </div>
+                </div>
+                <table cellspacing='0' id='tableMap'></table>
+            </div>
+        </div>
+    </div>
+    
+
 
 
     <script src='libraries/library_simple_v14.js'></script>

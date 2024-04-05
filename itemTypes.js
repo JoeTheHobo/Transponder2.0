@@ -80,7 +80,7 @@ createItemType({
 })
 createItemType({
     type: 'shell',
-    color: 'yellow',
+    color: 'rgba(255, 234, 0,0.75)',
     keyVSitem: 'key',
     location: true,
     bladeType: true,
@@ -124,6 +124,7 @@ createItemType({
     itemType: true,
     amount: true,
     chip: true,
+    buttons: true,
     fccID: true,
     model: true,
     link: true,

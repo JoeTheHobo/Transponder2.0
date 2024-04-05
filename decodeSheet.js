@@ -204,7 +204,7 @@ function decodeSheet() {
             if (lines[j].TLUID !== lines[i].TLUID) continue;
 
             lines[i].shell.push({
-                chip: lines[j].chip,
+                chip: lines[j].xhorse,
                 ymm: lines[j].ymm,
             })
             lines[i].ymm = lines[i].ymm.concat(lines[j].ymm)

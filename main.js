@@ -4,18 +4,21 @@ clearButton.onclick = function() {
 };
 
 window.addEventListener('resize', resize, true);
+let tableMapWidth = $('bottomMap').offsetWidth;
 function resize() {
-    $('body').style.width = (this.window.innerWidth - 600) +'px';
-    $('body').style.height = (this.window.innerHeight - (124 + $('bottomMap').offsetHeight)) +'px';
+    $('body').style.width = (this.window.innerWidth - 500) +'px';
+    //              Height =       Window Height      -  (Top Bar + Random Number to make it go up + Bottom Bar)
+    $('body').style.height = (this.window.innerHeight - (124 + 25 + 50)) +'px';
     $('leftBar').style.height = (window.innerHeight - 168) + 'px';
-    $('statButton').style.width = (window.innerWidth - ($('bottomMap').offsetWidth + 600)) + 'px';
-
 };
 
 
 
 let makes = [];
 let remotes = [];
+let savedKeys = ls.get('savedKeys',[]);
+let shownBoxes = [];
+let keyBoxesShown = 0;
 
 let carColors = [
     ['FCA','#9fc5e8'],
@@ -42,10 +45,16 @@ function startUp() {
     setupCars('makes');
     resize();
 
+    drawBoxes();
+
 }
 
 let currentBox = false;
 let carObj = decodeSheet();
+let abc = ['A','B','C','D','E','F','G','H','I','J','K','L','M','O','P','Q','R','S','T','U','V','W','X','Y','Z','AA','AB','AC','AD','AE','AF','AG'];
+let currentCol = false;
+let currentRow = false;
+
 changeStats('price');
 carLines = carObj.lines;
 let carMakes = carObj.makes;
@@ -55,6 +64,9 @@ let dataYears = $('years');
 let inputMakes = $('makesInput');
 let inputModels = $('modelsInput');
 let inputYears = $('yearsInput');
+let selectYears = $('yearsSelect');
+let selectMakes = $('yearsMakes');
+let selectModels = $('yearsModels');
 $('body').style.width = (window.innerWidth - 600) + 'px';
 $('body').style.height = ((window.innerHeight - 124) - $('tableMap').clientHeight) + 'px';
 
@@ -73,6 +85,7 @@ let tableMapSearches = [
 ]
 //Setuo Options for Table Map Select
 let blockOptions = ['ymm',''+ carObj.highestID];
+let setOptions = ['fccid','model','TLUID'];
 for (let k = 0; k < $('sfSelect').length; k++) {
     for (let i = 0; i < carObj.tags.length; i++) {
         if (blockOptions.includes(carObj.tags[i])) continue;
@@ -81,6 +94,7 @@ for (let k = 0; k < $('sfSelect').length; k++) {
         opt.value = carObj.tags[i];
         opt.innerHTML = carObj.tags[i].charAt(0).toUpperCase() + carObj.tags[i].substring(1,carObj.tags[i].length);
     }
+    $('sfSelect')[k].value = setOptions[k];
 }
 
 
@@ -96,11 +110,10 @@ function clear() {
     inputMakes.value = '';
     inputModels.value = '';
     inputYears.value = '';
-    keyBoxes.innerHTML = '';
-    rightBoxes.innerHTML = '';
     selectCarDiv.innerHTML = '';
     $('pullUp').style.display = 'none';
     $('pullUpStats').style.display = 'none';
+    shownBoxes = [];
 
     selectedMake = false;
     selectedModel = false;
@@ -108,6 +121,7 @@ function clear() {
 
     setupCars('makes');
     makeTableMap()
+    drawBoxes();
 }
 
 //Draw Mini boxes for choosing which car
@@ -191,11 +205,166 @@ let selectedMake = false;
 let selectedModel = false;
 let selectedYear = false;
 
+function drawBoxes(boxes = shownBoxes) {
+    keyBoxes.innerHTML = '';
+    $('rightBoxes').innerHTML = '';
+
+    keyBoxesShown = 0;
+
+    let newBoxes = [];
+
+    for (let i = 0; i < savedKeys.length; i++) {
+        savedKeys[i].also = false;
+    }
+
+    for (let i = 0; i < boxes.length; i++) {
+        let pass = true;
+        for (let j = 0; j < savedKeys.length; j++) {
+            if (savedKeys[j].col == boxes[i].col && savedKeys[j].row == boxes[i].row) {
+                savedKeys[j].also = true;
+                pass = false;
+            }
+        }
+        if (pass) newBoxes.push(boxes[i]);
+    }
+
+    boxes = savedKeys.concat(newBoxes)
+
+    let allBoxes = [];
+    for (let i = 0; i < boxes.length; i++) {
+        let found = false;
+        for (let j = 0; j < allBoxes.length; j++) {
+            if (allBoxes[j][0].col == boxes[i].col && allBoxes[j][0].row == boxes[i].row) {
+                found = true;
+                allBoxes[j].push(boxes[i]);
+            }
+        }
+        if (!found) {
+            allBoxes.push([boxes[i]])
+        }
+    }
+
+    boxes = allBoxes;
+
+    //Start Displaying
+    for (let i = 0; i < boxes.length; i++) {
+        let box = boxes[i][0];
+        let st = false;
+        for (let i = 0; i < itemTypes.length; i++) {
+            if (itemTypes[i].type == box.itemType) st = itemTypes[i];
+        }
+
+        keyBoxesShown++;
+
+        let createFromHere = keyBoxes;
+        if (st.display == 'right') createFromHere = rightBoxes;
+    
+        let holder = createFromHere.create('div');
+        holder.className = 'keyboxHolder2';
+
+        let div = holder.create('div');
+        div.className = 'keyboxHolder';
+        div.id = 'keyBox' + keyBoxesShown;
+        div.box = box;
+        div.chip = box.chip;
+    
+        if (st.colorLB) div.style.background = st.colorLB;
+        if (box.amount < 1) {
+            div.style.background = 'pink';
+        }
+        if (box.saved) {
+            div.style.background = 'lightyellow';
+        }
+        
+        let keyBoxId = div.create('div');
+        keyBoxId.className = 'keyboxItem';
+        keyBoxId.id = 'keyBoxLocation'
+        keyBoxId.innerHTML = box.col.toUpperCase() + box.row;
+    
+        let anyNotes = false;
+        for (let j = 0; j < boxes[i].length; j++) {
+            if (boxes[i][j].keyNotes) anyNotes = true;
+        }
+        if (anyNotes || box.saved) {
+            let type = div.create('div');
+            type.className = 'keyboxItem';
+            type.id = 'keyBoxItemNotes'
+            let notes = '';
+            if (box.saved) notes += '[' + box.savedName + '] ';
+            if (box.saved && box.also) notes += '<br> [Also This Car!]';
+            
+            let allNoNotes = true;
+            for (let j = 0; j < boxes[i].length; j++) {
+                if (boxes[i][j].keyNotes) allNoNotes = false; 
+            }
+            if (!allNoNotes) {
+                for (let j = 0; j < boxes[i].length; j++) {
+                    let br = j === 0 ? '' : '<br>';
+                    if (boxes[i][j].keyNotes) notes += br + (j + 1) + ': ' + boxes[i][j].keyNotes.toUpperCase();
+                    else notes += br + (j + 1) + ': NO NOTES';
+                }
+            }
+            
+            type.innerHTML = notes;
+        }
+    
+        if (st.buttons && st.keyVSitem == 'key') {
+            let type = div.create('div');
+            type.className = 'keyboxItem';
+            type.className = 'keyBoxType';
+            type.innerHTML = box.type;
+        }
+        if (st.keyVSitem == 'item') {
+            let type = div.create('div');
+            type.className = 'keyboxItem';
+            type.className = 'keyBoxType';
+            type.innerHTML = box.itemType.toUpperCase();
+        }
+    
+        
+    
+        let amt = div.create('div');
+        amt.className = 'keyboxItem';
+        amt.id = 'keyBoxAMT';
+        amt.innerHTML = box.amount + ' Left';
+    
+        
+        if (st.retail) {
+            let type = div.create('div');
+            type.className = 'keyboxItem';
+            type.id = 'keyBoxMoney';
+            type.innerHTML = '$' + box.retail;
+        }
+        
+        div.onclick = function() {
+            let car = this.box;
+            makeTableMap(car.col,car.row)
+            let shell = car.itemType == 'shell' ? this.chip : false;
+            pullUp(getBoxFromId(car.col + car.row),shell);
+            for (let i = 1; i < keyBoxesShown + 1; i++) {
+                $('keyBox' + i).style.boxShadow = 'rgba(0, 0, 0, 0.25) 0px 14px 28px, rgba(0, 0, 0, 0.22) 0px 10px 10px';
+            }
+            this.style.boxShadow = 'rgba(50, 0, 255, 1) 0px 14px 28px, rgba(0, 0, 0, 0.22) 0px 10px 10px';
+        }
+
+        let optionDiv = holder.create('div');
+        optionDiv.className = 'keyBoxOptions';
+        let saveButton = optionDiv.create('div');
+        saveButton.className = 'keyBoxSaveButton';
+        saveButton.box = box;
+        if (box.saved) saveButton.innerHTML = 'Un-Save';
+        else saveButton.innerHTML = 'Save';
+        saveButton.onclick = function() {
+            saveKey(false,this.box)
+        };
+    }
+}
+
 function triggerMakeChange() {
     inputModels.value = '';
     inputYears.value = '';
-    keyBoxes.innerHTML = '';
-    rightBoxes.innerHTML = '';
+    shownBoxes = [];
+    drawBoxes();
     selectedModel = false;
     selectedYear = false;
     $('pullUp').style.display = 'none';
@@ -228,8 +397,8 @@ function triggerModelChange() {
 
     inputYears.value = '';
     selectedYear = false;
-    keyBoxes.innerHTML = '';
-    rightBoxes.innerHTML = '';
+    shownBoxes = [];
+    drawBoxes();
     $('pullUp').style.display = 'none';
 
     dataYears.innerHTML = '';
@@ -255,13 +424,10 @@ function triggerModelChange() {
         setupCars('models');
     }
 }
-let keyBoxesShown = 0;
 function triggerYearChange() {
-	
-	keyBoxesShown = 0;
-    keyBoxes.innerHTML = '';
     rightBoxes.innerHTML = '';
     $('pullUp').style.display = 'none';
+    shownBoxes = [];
 
     let found = false;
     for (let i = 0; i < carMakes[selectedMake].models[selectedModel].years.length; i++) {
@@ -290,75 +456,11 @@ function triggerYearChange() {
 
             if (!pass) continue;
 
-            keyBoxesShown++;
+            shownBoxes.push(box);
 
-            let createFromHere = keyBoxes;
-            if (st.display == 'right') createFromHere = rightBoxes;
-
-
-            let div = createFromHere.create('div');
-            div.className = 'keyboxHolder';
-			div.id = 'keyBox' + keyBoxesShown;
-            div.box = box;
-            div.chip = box.chip;
-
-            if (st.colorLB) div.style.background = st.colorLB;
-			if (boxes[i].amount < 1) {
-				div.style.background = 'pink';
-			}
-            
-            let keyBoxId = div.create('div');
-            keyBoxId.className = 'keyboxItem';
-            keyBoxId.id = 'keyBoxLocation'
-            keyBoxId.innerHTML = boxes[i].col.toUpperCase() + boxes[i].row;
-
-            if (box.keyNotes) {
-                let type = div.create('div');
-                type.className = 'keyboxItem';
-                type.id = 'keyBoxItemNotes'
-                type.innerHTML = 'Notes: ' + box.keyNotes.toUpperCase();
-            }
-
-            if (st.buttons && st.keyVSitem == 'key') {
-                let type = div.create('div');
-                type.className = 'keyboxItem';
-                type.className = 'keyBoxType';
-                type.innerHTML = box.type;
-            }
-            if (st.keyVSitem == 'item') {
-                let type = div.create('div');
-                type.className = 'keyboxItem';
-                type.className = 'keyBoxType';
-                type.innerHTML = box.itemType.toUpperCase();
-            }
-
-            
-
-            let amt = div.create('div');
-            amt.className = 'keyboxItem';
-            amt.id = 'keyBoxAMT';
-            amt.innerHTML = box.amount + ' Left';
-
-            
-            if (st.retail) {
-                let type = div.create('div');
-                type.className = 'keyboxItem';
-                type.id = 'keyBoxMoney';
-                type.innerHTML = '$' + box.retail;
-            }
-			
-            div.onclick = function() {
-                let car = this.box;
-                makeTableMap(car.col,car.row)
-                let shell = car.itemType == 'shell' ? this.chip : false;
-                pullUp(getBoxFromId(car.col + car.row),shell);
-				for (let i = 1; i < keyBoxesShown + 1; i++) {
-					$('keyBox' + i).style.boxShadow = 'rgba(0, 0, 0, 0.25) 0px 14px 28px, rgba(0, 0, 0, 0.22) 0px 10px 10px';
-				}
-				this.style.boxShadow = 'rgba(50, 0, 255, 0.25) 0px 14px 28px, rgba(0, 0, 0, 0.22) 0px 10px 10px';
-            }
 
         }
+        drawBoxes()
     } else {
         setupCars('years')
     }
@@ -399,130 +501,135 @@ function saveCookies() {
 		});
 	}
 	ls.save("keyList",toSave);
+    ls.save('savedKeys',savedKeys);
 }
 
-function makeTableMap(ccol = "FALSE",crow = "FALSE",lines = carObj.lines) { 
+function makeTableMap(ccol = false,crow = false,lines = carObj.lines) { 
     remotes = [];
-    let abc = ['A','B','C','D','E','F','G','H','I','J','K','L','M','O','P','Q','R','S','T','U','V','W','X','Y','Z','AA','AB','AC','AD','AE','AF','AG'];
     let height = 12;
     let length = 32;
-    let order = carObj.carCom;
-    let newLines = [];
-    for (let i = 0; i < order.length; i++) {
-        for (let j = 0; j < lines.length; j++) {
-            if (lines[j].car == order[i]) newLines.push(lines[j])
-        }
-    }
+    currentCol = ccol;
+    currentRow = crow;
 
-    lines = newLines;
-
+    //Get And Clear Table
     let table = $('tableMap');
     table.innerHTML = '';
+
     resetStatPercentages();
+
     for (let i = height-1; i > -2; i--) {
         let row = table.insertRow(0);
         for (let j = length-1; j > -2; j--) {
             if (i == -1) {
+                //Draw Alphabet row
                 let cell = row.insertCell(0);
                 cell.className = 'keyBoxNumber';
                 if (j > -1) cell.innerHTML = abc[j];
                 if (j+1 == 0) cell.innerHTML = '';
-            } else {
-                if (j == -1) {
-                    let cell = row.insertCell(0);
-                    cell.className = 'keyBoxLetter';
-                    cell.innerHTML = i+1;
-                } else {
-                    let cell = row.insertCell(0);
-                    cell.className = 'keyBox';
-                    
-                    cell.row = i+1;
-                    cell.col = abc[j];
-                    
-                    let box = getBoxFromId(cell.col + cell.row);
+                continue;
+            }
 
-                    //Update Stats
-                    stats.totalBoxes++;
-                    if (box) {
-                        if (box.amount < 1) stats.percentages[0].count++;
-                        for (let p = 0; p < stats.percentages.length; p++) {
-                            let on = stats.percentages[p];
-                            let it = boxToItemType(box);
-                            if (on.type == 'itemType' && it.type == on.title) {
-                                on.count++;
-                            }
-                            if (on.type == 'carCom' && box.car.toLowerCase() == on.title.toLowerCase()) {
-                                on.count++;
-                            }
-                        }
-                    } else {
-                        stats.percentages[1].count++;
-                    }
-                    
-                    
-                    //Finding Which Color
-                    let color;
+            if (j == -1) {
+                //Draw Alphabet coloumn
+                let cell = row.insertCell(0);
+                cell.className = 'keyBoxLetter';
+                cell.innerHTML = i+1;
+                continue;
+            }
 
-                    if (box) {
-                        color = findColor(box.car)
-                    } else {
-                        color = 'gray';
-                    }
-                    if (cell.row == crow && cell.col.toLowerCase() == ccol.toLowerCase())  {
-                        cell.className = 'keyBoxSelected';
-                        color = 'white';
-                    }
+            //Draw Boxes
+            let cell = row.insertCell(0);
+            cell.className = 'keyBox';
+            
+            cell.row = i+1;
+            cell.col = abc[j];
+            
+            let box = getBoxFromId(cell.col + cell.row);
 
-                    //Check Search Filters
-                    let skipFilter = false;
-                    for (let p = 0; p < tableMapSearches.length; p++) {
-                        if (!tableMapSearches[p].select || !tableMapSearches[p].value) continue;
-                        if (!box) continue;
-                        let value = eval('box.' + tableMapSearches[p].select) + '';
-                        if (value.toLowerCase().includes(tableMapSearches[p].value.toLowerCase())) {
-                            color = 'black';
-                            skipFilter = true;
-
-                        }
+            //Update Stats
+            stats.totalBoxes++;
+            if (box) {
+                if (box.amount < 1) stats.percentages[0].count++;
+                for (let p = 0; p < stats.percentages.length; p++) {
+                    let on = stats.percentages[p];
+                    let it = boxToItemType(box);
+                    if (on.type == 'itemType' && it.type == on.title) {
+                        on.count++;
                     }
-
-                    let brightnessFilter = 1;
-                    if (box && !skipFilter) {
-                        brightnessFilter = box.amount > 0 ? 1 : .5;
-                    }
-                    cell.css({
-                        background: color,
-                        filter: "brightness(" + brightnessFilter + ")",
-                    })
-                    //End Color
-                    
-                    cell.style.border = '1px solid #333';
-                    if (j % 8 == 0) {
-                        cell.style.borderLeft = '3px solid black';
-                    }
-                    if (i % 6 == 0) {
-                        cell.style.borderTop = '3px solid black';
-                    }
-
-                    cell.id = cell.col.toLowerCase() + cell.row;
-                    cell.line = findLineFromCCR(cell.id);
-                    if (cell.line) {
-                        if (cell.line.itemType.toLowerCase() == 'remote') remotes.push(cell.line);
-                        cell.innerHTML = cell.line.itemType.charAt(0).toUpperCase();
-                        if (cell.innerHTML == 'K' || cell.innerHTML == 'P') cell.innerHTML = '';
-                    }
-					
-					
-        
-                    cell.onclick = function() {
-                        clear();
-						$(this.id).className = 'keyBoxSelected';
-						$(this.id).style.background = 'white';
-                        $(this.id).style.filter = 'brightness(1)';
-                        
-					    if (getBoxFromId(this.id)) pullUp(getBoxFromId(this.id))
+                    if (on.type == 'carCom' && box.car.toLowerCase() == on.title.toLowerCase()) {
+                        on.count++;
                     }
                 }
+            } else {
+                stats.percentages[1].count++;
+            }
+            
+            
+            //Finding Which Color
+            let color;
+
+            if (box) {
+                color = findColor(box.car)
+            } else {
+                color = 'gray';
+            }
+
+            if (cell.row == crow && cell.col.toLowerCase() == ccol.toLowerCase())  {
+                cell.className = 'keyBoxSelected';
+                color = 'white';
+            }
+
+            //Check Search Filters
+            let skipFilter = false;
+            for (let p = 0; p < tableMapSearches.length; p++) {
+                if (!tableMapSearches[p].select || !tableMapSearches[p].value) continue;
+                if (!box) continue;
+                let value = eval('box.' + tableMapSearches[p].select) + '';
+                if (value.toLowerCase().includes(tableMapSearches[p].value.toLowerCase())) {
+                    color = 'black';
+                    skipFilter = true;
+
+                }
+            }
+
+            let brightnessFilter = 1;
+            if (box && !skipFilter) {
+                brightnessFilter = box.amount > 0 ? 1 : .5;
+            }
+            cell.css({
+                background: color,
+                filter: "brightness(" + brightnessFilter + ")",
+            })
+            //End Color
+            
+            cell.style.border = '1px solid #333';
+            if (j % 8 == 0) {
+                cell.style.borderLeft = '3px solid black';
+            }
+            if (i % 6 == 0) {
+                cell.style.borderTop = '3px solid black';
+            }
+
+            cell.id = cell.col.toLowerCase() + cell.row;
+            cell.line = findLineFromCCR(cell.id);
+            if (cell.line) {
+                if (cell.line.itemType.toLowerCase() == 'remote') remotes.push(cell.line);
+                cell.innerHTML = cell.line.itemType.charAt(0).toUpperCase();
+                if (cell.innerHTML == 'K' || cell.innerHTML == 'P') cell.innerHTML = '';
+            }
+            
+            
+
+            cell.onclick = function() {
+                clear();
+                $(this.id).className = 'keyBoxSelected';
+                $(this.id).style.background = 'white';
+                $(this.id).style.filter = 'brightness(1)';
+
+                currentCol = this.col;
+                currentRow = this.row;
+                
+                if (getBoxFromId(this.id)) pullUp(getBoxFromId(this.id))
             }
         }
     }
@@ -531,7 +638,67 @@ function makeTableMap(ccol = "FALSE",crow = "FALSE",lines = carObj.lines) {
         let sp = stats.percentages[i];
         sp.value = sp.count / stats.totalBoxes;
     }
+    //Update TableMapWidth
+    tableMapWidth = $('bottomMap').offsetWidth;
 }
+document.addEventListener('keydown',function(e) {
+    
+    let col,row;
+    if (!currentCol) {
+        col = 'a';
+        row = 1;
+    }
+    if (e.key == 'ArrowDown') {
+        if (currentCol) {
+            col = currentCol;
+            row = currentRow + 1;
+        }
+        if (row > 12) row = 12;
+        moveTableSpot(col,row);
+    }
+    if (e.key == 'ArrowUp') {
+        if (currentCol) {
+            col = currentCol;
+            row = currentRow - 1;
+        }
+        if (row < 1) row = 1;
+        moveTableSpot(col,row);
+    }
+    if (e.key == 'ArrowRight') {
+        let colVal = abc.indexOf(currentCol.toUpperCase()) + 1;
+        if (currentCol) {
+            col = abc[colVal];
+            row = currentRow;
+        }
+        if (colVal > 32) col = 'AG';
+        moveTableSpot(col,row);
+    }
+    if (e.key == 'ArrowLeft') {
+        let colVal = abc.indexOf(currentCol.toUpperCase()) - 1;
+        if (currentCol) {
+            col = abc[colVal];
+            row = currentRow;
+        }
+        if (colVal < 1) col = 'A';
+        moveTableSpot(col,row);
+    }
+})
+
+function moveTableSpot(col,row) {
+    
+    if (getBoxFromId(col + row)) {
+        currentBox = getBoxFromId(col + row)
+        pullUp(currentBox)
+    } else {
+        let c = currentCol;
+        let r = currentRow;
+        clear();
+        currentCol = c;
+        currentRow = r;
+    }
+    makeTableMap(col,row)
+}
+
 function getItemFromBox(box) {
 	let brow = box.row;
 	let bcol = box.col;
@@ -708,6 +875,9 @@ function pullUp(box,shell = false) {
 		}
     }
 
+    if (box.saved) $('saveKey').innerHTML = 'Un-Save';
+    else $('saveKey').innerHTML = 'Save';
+
     if (!selectedType.amount) $('puAmount').style.display = 'none';
 	else {
         $('puAmount').style.display = 'block';
@@ -841,6 +1011,9 @@ function findLineFromCCR(ccr) {
 
 $('remoteViewerButton').onclick = remoteViewerPopup;
 $('remoteViewer').style.display = 'none';
+
+
+
 function remoteViewerPopup() {
     if ($('remoteViewer').style.display == 'none') {
         $('remoteViewer').style.display = 'block';
@@ -879,15 +1052,34 @@ function remoteViewerPopup() {
     }
 }
 
-$('statButton').onclick = statPullUp;
-function statPullUp() {
-    if ($('pullUpStats').style.display === 'inline-block') {
-        $('pullUpStats').style.display = 'none';
+$('statButton').onclick = () => { openMenu('pullUpStats') };
+$('bottomBar').onclick = () => { openMenu('pullUpOptions') };
+function openMenu(menu) {
+    let work = $(menu);
+    let pass = false;
+    if ($('remoteViewer').style.display == 'block') {
+        pass = true;
+    }
+
+    $('remoteViewer').style.display = 'none';
+    $('remoteViewerButton').innerHTML = 'Remote Viewer';
+    $('remoteBottom').style.display = 'none';
+
+    if (menu !== 'pullUpOptions') $('pullUpOptions').style.display = 'none';
+    if (menu !== 'pullUpStats') $('pullUpStats').style.display = 'none';
+
+    if (pass) {
+        work.style.display = 'inline-block';
+        return
+    }
+
+    if (work.style.display !== 'none' && work.style.display !== '') {
+        work.style.display = 'none';
         return;
     }
 
     $('pullUp').style.display = 'none';
-    $('pullUpStats').style.display = 'inline-block';
+    work.style.display = 'inline-block';
 
     
 }
@@ -934,4 +1126,36 @@ function boxToItemType(box) {
         if (itemTypes[i].type == box.itemType) st = itemTypes[i];
     }
     return st;
+}
+
+
+function saveKey(use,box = currentBox) {
+    console.log(use)
+    box.saved = true;
+    if (inputMakes.value) box.savedName = inputMakes.value + ' ' + inputModels.value + ' ' + inputYears.value;
+    else box.savedName = 'From Table Map';
+
+    for (let i = 0; i < savedKeys.length; i++) {
+        if (savedKeys[i].col == box.col && savedKeys[i].row == box.row) {
+            savedKeys.splice(i,1)
+            box.saved = false;
+            drawBoxes();
+            saveCookies();
+            if (use) use.innerHTML = 'Save';
+            return;
+        }
+    }
+
+    savedKeys.push(box);
+    if (use) use.innerHTML = 'Un-Save';
+
+    drawBoxes();
+    saveCookies();
+}
+
+$('mapButton').onmouseover = function() {
+    resize();
+}
+$('mapButton').onmouseleave = function() {
+    resize();
 }

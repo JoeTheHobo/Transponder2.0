@@ -27,6 +27,10 @@ function gatherImages(line) {
     $('newCatBTN').style.display = 'none';
     $('skipBTN').style.display = 'none';
     $('decodeImage').onload = function() {
+        $('location').innerHTML = lines[line].col.toUpperCase() + lines[line].row;
+        $('mainFreq').innerHTML = lines[line].frequency;
+        $('mainBat').innerHTML = lines[line].battery;
+        $('mainBlade').innerHTML = lines[line].bladeType;
         $('newCatBTN').style.display = 'inline-block';
         $('skipBTN').style.display = 'inline-block';
     }
@@ -45,12 +49,19 @@ function newCatagory() {
     holder.className = 'holder';
     holder.src = lines[currentLine].imgLink;
     holder.id = 'ID' + catagories.length;
+    holder.box = lines[currentLine];
     holder.cat = catagories.length;
     holder.onmouseover = function() {
         $('examineImage').src = this.src;
+        $('oldFreq').innerHTML = this.box.frequency;
+        $('oldBat').innerHTML = this.box.battery;
+        $('oldBlade').innerHTML = this.box.bladeType;
     }
     holder.onmouseleave = function() {
         $('examineImage').src = '';
+        $('oldFreq').innerHTML = '';
+        $('oldBat').innerHTML = '';
+        $('oldBlade').innerHTML = '';
     }
     holder.onclick = function() {
         catagories[this.cat].push(currentLine);
@@ -365,5 +376,3 @@ let obj = [
         221
     ]
 ]
-
-objToStr();
